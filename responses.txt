@@ -1,0 +1,45 @@
+
+Matthew Lowery (U1472834)
+
+Part 1. The trial and error method would struggle because the main reward to get up the hill is quite delayed and not relative to one single action but rather several tactical actions. Thus the reward signal is hard for the agent to decipher initially, where the agent would be performing random actions in hopes of achieving an award. It could get stuck in this state for quite some time as the task is non-trivial. Only until it surmounts the hill does it get any ounce of feedback so that it could adjust the actions from random choice. Potentially an intermediate reward like for y-position might help the agent for this reason. 
+
+Part 2. 
+The most reliable strategy is right left right. Going left and then right up the hill works also, but left,right,left,right is probably overkill. The highest score I achieved was -108, I believe using the left-right technique. How quickly you're able to do this 2 key-stroke method is a little dependent on the initial state of the car, which is interesting. 
+
+Part 3. 
+Yes, it correctly imitated my actions pretty well, considering it got out of the valley every time. I made the num_epochs 200 and the learning rate .2 with the adam optimizer. 
+
+Stats:
+average policy return -131.5
+min policy return -144.0
+max policy return -108.0
+
+
+Part 4. 
+
+The agent performed about the same as in providing one demo although I would have assumed having a bigger datasets of s,a pairs from multiple demos would help. The agent does copy the strategy well (right, left, right). 
+
+Stats:
+average policy return -154.5
+min policy return -200.0
+max policy return -143.0
+
+Part 5.
+
+The agent basically did either of the two demonstrations in each case. To make BC more robust to bad demonstrations we could somehow include the reward in the loss function so that the agent also tries to maximize the reward when predicting an action from a given state, it doesn't just try to match the s,a pair from the demonstration. 
+
+Stats: 
+average policy return -179.16666666666666
+min policy return -200.0
+max policy return -137.0
+
+Part 6. 
+
+I was not. My loss did not converge and the agent was not moving in the middle. I believe this was because I did not keep a concise series of actions and instead was focused on the goal of moving along the hill sides. In the case as before of trying to reach a goal, I kept a concise series of actions, which made it easier for the agent to learn them. 
+
+Part 7. 
+
+Behavior cloning from observation assumes we do not have (s,a) pairs and instead we have (s_1,s_2) pairs, thus we must first learn to predict the action from the (s_1,s_2) pairs and then train a normal BC model with these created (s,a) pairs. 
+
+Part 8. 
+This model doesn't work very well, which is likely because the inverse dynamics model is not converging (it settles at a loss of 1.0983), even after I provided a larger dataset by changing the num_interactions variable to 10k and increased the model size. Of course, if the model is not predicting the right actions from random (s_1, s_2) pairs, then when it uses the demo (s_1,s_2) pairs it would also probably predict the wrong actions. Thus the BC model would be trained on a faulty dataset of (s,a) pairs.  

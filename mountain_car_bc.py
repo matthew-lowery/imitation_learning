@@ -40,9 +40,19 @@ def torchify_demos(sas_pairs):
 
 
 def train_policy(obs, acs, nn_policy, num_train_iters):
-    """TODO: train the policy using standard behavior cloning. Feel free to add other helper methods if you'd like or restructure the code as desired."""
+    optimizer = torch.optim.Adam(nn_policy.parameters(), lr=0.2)
+    loss_fn = torch.nn.CrossEntropyLoss()
 
+    for epoch in range(num_train_iters):
+        optimizer.zero_grad()
 
+        acs_pred = nn_policy(obs)
+        loss = loss_fn(acs_pred, acs)
+        
+        loss.backward()
+        optimizer.step()
+
+        print(loss)
 
 class PolicyNetwork(nn.Module):
     '''
@@ -53,15 +63,13 @@ class PolicyNetwork(nn.Module):
     '''
     def __init__(self):
         super().__init__()
-
-       """TODO: create the layers for the neural network. A two-layer network should be sufficient"""
-
-
+        self.lins = nn.ModuleList([nn.Linear(2, 10), nn.Linear(10,10), nn.Linear(10,3)])
 
     def forward(self, x):
-        """TODO: this method performs a forward pass through the network, applying a non-linearity (ReLU is fine) on the hidden layers and should output logit values (since this is a discrete action task) for the 3-way classification problem"""
+        x = nn.ReLU()(self.lins[0](x))
+        x = nn.ReLU()(self.lins[1](x))
+        return self.lins[2](x)
 
-    
 
 #evaluate learned policy
 def evaluate_policy(pi, num_evals, human_render=True):
@@ -93,8 +101,8 @@ def evaluate_policy(pi, num_evals, human_render=True):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=None)
-    parser.add_argument('--num_demos', default = 1, type=int, help="number of human demonstrations to collect")
-    parser.add_argument('--num_bc_iters', default = 100, type=int, help="number of iterations to run BC")
+    parser.add_argument('--num_demos', default = 5, type=int, help="number of human demonstrations to collect")
+    parser.add_argument('--num_bc_iters', default = 200, type=int, help="number of iterations to run BC")
     parser.add_argument('--num_evals', default=6, type=int, help="number of times to run policy after training for evaluation")
 
     args = parser.parse_args()
@@ -107,6 +115,7 @@ if __name__ == "__main__":
 
     #train policy
     pi = PolicyNetwork()
+    print(pi.parameters())
     train_policy(obs, acs, pi, args.num_bc_iters)
 
     #evaluate learned policy

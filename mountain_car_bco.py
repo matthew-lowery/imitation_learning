@@ -41,37 +41,33 @@ class InvDynamicsNetwork(nn.Module):
         The network should have three outputs corresponding to the logits for a 3-way classification problem.
 
     '''
-    def __init__(self):
-        super().__init__()
-
         #This network should take in 4 inputs corresponding to car position and velocity in s and s'
         # and have 3 outputs corresponding to the three different actions
 
-        #################
-        #TODO:
-        #################
+    def __init__(self):
+            super().__init__()
+            latent_size = 50
+            self.lins = nn.ModuleList([nn.Linear(4, latent_size), nn.Linear(latent_size, latent_size), nn.Linear(latent_size,3)])
 
     def forward(self, x):
-        #this method performs a forward pass through the network
-        ###############
-        #TODO:
-        ###############
-        return x
+        x = nn.ReLU()(self.lins[0](x))
+        x = nn.ReLU()(self.lins[1](x))
+        return self.lins[2](x)
     
 
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=None)
-    parser.add_argument('--num_demos', default = 1, type=int, help="number of human demonstrations to collect")
-    parser.add_argument('--num_bc_iters', default = 100, type=int, help="number of iterations to run BC")
+    parser.add_argument('--num_demos', default = 10, type=int, help="number of human demonstrations to collect")
+    parser.add_argument('--num_bc_iters', default = 200, type=int, help="number of iterations to run BC")
     parser.add_argument('--num_evals', default=6, type=int, help="number of times to run policy after training for evaluation")
 
     args = parser.parse_args()
 
 
     #collect random interaction data
-    num_interactions = 5
+    num_interactions = 10000
     s_s2, acs = collect_random_interaction_data(num_interactions)
     #put the data into tensors for feeding into torch
     s_s2_torch = torch.from_numpy(np.array(s_s2)).float().to(device)
@@ -84,6 +80,19 @@ if __name__ == "__main__":
     #TODO: Train the inverse dyanmics model, no need to be fancy you can do it in one full batch via gradient descent if you like
     ##################
 
+    optimizer = torch.optim.Adam(inv_dyn.parameters(), lr=0.2)
+    loss_fn = torch.nn.CrossEntropyLoss()
+
+    for epoch in range(args.num_bc_iters):
+        optimizer.zero_grad()
+
+        acs_pred = inv_dyn(s_s2_torch)
+        loss = loss_fn(acs_pred, a_torch)
+        
+        loss.backward()
+        optimizer.step()
+
+        print(loss)
 
 
     #collect human demos
